@@ -21,13 +21,75 @@
 //Determines what color the cell at the given row/col should be. This should not affect Image, and should allocate space for a new Color.
 Color *evaluateOnePixel(Image *image, int row, int col)
 {
-	//YOUR CODE HERE
+	if (!image || !image->image || image->rows <= row || image->cols <= col) {
+		fprintf(stderr, "failed to get pixel\n");
+		return NULL;
+	}
+
+	Color *color = (Color *)malloc(sizeof(Color));
+	if (!color) {
+		fprintf(stderr, "malloc failed.\n");
+		return NULL;
+	}
+
+	if ((image->image[row][col].B & 1) != 0) {
+		color->R = 255;
+		color->G = 255;
+		color->B = 255;
+	} else {
+		color->R = 0;
+		color->G = 0;
+		color->B = 0;
+	}
+
+	return color;
 }
 
 //Given an image, creates a new image extracting the LSB of the B channel.
 Image *steganography(Image *image)
 {
-	//YOUR CODE HERE
+	if (!image || !image->image) {
+		return NULL;
+	}
+
+	Image *new_image  = (Image *)malloc(sizeof(Image));
+	if (!new_image) {
+		fprintf(stderr, "malloc failed.\n");
+		return NULL;
+	}
+
+	new_image->rows = image->rows;
+	new_image->cols = image->cols;
+	new_image->image = (Color **)malloc(sizeof(Color *) * image->rows);
+	if (!new_image->image) {
+		fprintf(stderr, "malloc failed.\n");
+		free(new_image);
+		return NULL;
+	}
+
+	for (uint32_t i = 0; i < image->rows; i++) {
+		new_image->image[i] = (Color *)malloc(sizeof(Color) * image->cols);
+		if (!new_image->image[i]) {
+			fprintf(stderr, "malloc failed.\n");
+			freeImage(new_image);
+			return NULL;
+		}
+
+		for (uint32_t j = 0; j < image->cols; j++) {
+			Color *new_color = evaluateOnePixel(image, i, j);
+			if (!new_color) {
+				fprintf(stderr, "evaluateOnePixel failed.\n");
+				freeImage(new_image);
+				return NULL;
+			}
+			new_image->image[i][j].R = new_color->R;
+			new_image->image[i][j].G = new_color->G;
+			new_image->image[i][j].B = new_color->B;
+			free(new_color);
+		}
+	}
+
+	return new_image;
 }
 
 /*
@@ -45,5 +107,25 @@ Make sure to free all memory before returning!
 */
 int main(int argc, char **argv)
 {
-	//YOUR CODE HERE
+	if (argc != 2) {
+		fprintf(stderr, "Usage: steganography [file]\n");
+		return -1;
+	}
+
+	Image *image = readData(argv[1]);
+	if (!image) {
+		fprintf(stderr, "load image failed.\n");
+		return -1;
+	}
+
+	Image *new_image = steganography(image);
+	freeImage(image);
+	if (!new_image) {
+		fprintf(stderr, "steganography failed.\n");
+		return -1;
+	}
+
+	writeData(new_image);
+	freeImage(new_image);
+	return 0;
 }
