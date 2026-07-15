@@ -42,21 +42,21 @@ Image *readData(char *filename)
 	if (fscanf(fp, "%2s", magic) != 1) {
 		fprintf(stderr, "wrong format\n");
 		fclose(fp);
-		freeImage(image);
+		free(image);
 		return NULL;
 	}
 
 	if (strcmp(magic, "P3") != 0) {
 		fprintf(stderr, "wrong format\n");
 		fclose(fp);
-		freeImage(image);
+		free(image);
 		return NULL;
 	}
 
 	if (fscanf(fp, "%u %u", &image->cols, &image->rows) != 2) {
 		fprintf(stderr, "wrong format\n");
 		fclose(fp);
-		freeImage(image);
+		free(image);
 		return NULL;
 	}
 
@@ -64,11 +64,18 @@ Image *readData(char *filename)
 	if (fscanf(fp, "%u", &maxVal) != 1) {
 		fprintf(stderr, "wrong format\n");
 		fclose(fp);
-		freeImage(image);
+		free(image);
 		return NULL;
 	}
 
 	image->image = (Color **)calloc(image->rows, sizeof(Color*));
+	if (!image->image) {
+		fprintf(stderr, "calloc failed\n");
+		fclose(fp);
+		free(image);
+		return NULL;
+	}
+
 	for (uint32_t i = 0; i < image->rows; i++) {
 		image->image[i] = malloc(sizeof(Color) * image->cols);
 		for (uint32_t j = 0; j < image->cols; j++) {

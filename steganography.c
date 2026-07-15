@@ -60,9 +60,9 @@ Image *steganography(Image *image)
 
 	new_image->rows = image->rows;
 	new_image->cols = image->cols;
-	new_image->image = (Color **)malloc(sizeof(Color *) * image->rows);
+	new_image->image = (Color **)calloc(image->rows, sizeof(Color*));
 	if (!new_image->image) {
-		fprintf(stderr, "malloc failed.\n");
+		fprintf(stderr, "calloc failed.\n");
 		free(new_image);
 		return NULL;
 	}
@@ -122,10 +122,12 @@ int main(int argc, char **argv)
 	freeImage(image);
 	if (!new_image) {
 		fprintf(stderr, "steganography failed.\n");
+		freeImage(image);
 		return -1;
 	}
 
 	writeData(new_image);
 	freeImage(new_image);
+	freeImage(image);
 	return 0;
 }
